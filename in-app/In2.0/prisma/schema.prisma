@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Mood {
+  id          String   @id @default(cuid())
+  prompt      String   // Original user prompt
+  location    String   // Normalized location (e.g., "Soho, London")
+  guestCount  Int      // Party size
+  response    Json     // Structured Event data from AI
+  createdAt   DateTime @default(now())
+
+  // Composite index for efficient cache lookups
+  @@index([location, createdAt])
+  @@index([prompt])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  date        DateTime
+  location    String
+  image       String?
+  type        String    @default("EVENT") // "EVENT", "HANGOUT", "DIGITAL"
+  status      String    @default("PROPOSED") // "PROPOSED", "CONFIRMED", "CANCELLED"
+  
+  // Monetization fields
+  affiliateUrl String?
+  partnerId    String?
+  partner      Partner?  @relation(fields: [partnerId], references: [id])
+  isSponsored  Boolean   @default(false)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  guests      Guest[]
+  comments    Comment[]
+  options     EventOption[]
+  clicks      AffiliateClick[]
+}
+
+model EventOption {
+  id          String    @id @default(cuid())
+  title       String
+  location    String
+  description String?
+  image       String?
+  voteCount   Int       @default(0)
+  
+  // Monetization fields
+  affiliateUrl String?
+  partnerId    String?
+  partner      Partner?  @relation(fields: [partnerId], references: [id])
+  isTopPick    Boolean   @default(false)
+  
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id])
+  
+  votes       Guest[]
+}
+
+model Guest {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String?  // Optional link to auth user
+  avatar    String?
+  status    String   // "IN", "OUT", "MAYBE", "INTERESTED"
+  
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  
+  votedOptionId String?
+  votedOption   EventOption? @relation(fields: [votedOptionId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  message   String
+  author    String
+  userId    String?
+  avatar    String?
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  username  String?  @unique
+  avatar    String?
+  bio       String?
+  mood      String?  // Current mood status e.g. "Looking for Cocktails"
+  
+  friends   Friendship[] @relation("UserFriends")
+  friendOf  Friendship[] @relation("UserFriendOf")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  
+  requesterId String
+  requester   Profile @relation("UserFriends", fields: [requesterId], references: [id])
+  
+  addresseeId String
+  addressee   Profile @relation("UserFriendOf", fields: [addresseeId], references: [id])
+  
+  status    String   // "PENDING", "ACCEPTED"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, addresseeId])
+}
+
+// Monetization Models
+
+model Partner {
+  id          String   @id @default(cuid())
+  name        String
+  category    String   // "restaurant", "bar", "activity", "entertainment"
+  zipCode     String
+  affiliateUrl String
+  priority    Int      @default(0) // Higher = more priority
+  isActive    Boolean  @default(true)
+  
+  events      Event[]
+  options     EventOption[]
+  clicks      AffiliateClick[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([zipCode, category, isActive])
+}
+
+model AffiliateClick {
+  id        String   @id @default(cuid())
+  
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id])
+  
+  partnerId String
+  partner   Partner  @relation(fields: [partnerId], references: [id])
+  
+  userId    String?  // Guest session ID or authenticated user ID
+  clickedAt DateTime @default(now())
+  
+  @@index([partnerId, clickedAt])
+  @@index([eventId])
+}
