@@ -17,10 +17,11 @@ export default function ShareInvite({ title, url, type = 'hangout', sender }: Sh
 
     const shareMessage = type === 'date'
         ? `Hey! I found a few cool spots for our date. Pick your favorite here: ${url}`
-        : `Check out this hangout: ${title}. RSVP here: ${url}`;
+        : `Check out this hangout: ${title}. RSVP here: ${url.replace(/\/events\/|\/mood\//, '/guest/')}`;
 
     const handleShare = async () => {
-        if (navigator.share) {
+        // Fallback or specific logic
+        if (typeof navigator !== 'undefined' && navigator.share) {
             try {
                 await navigator.share({
                     title: `Join: ${title}`,
@@ -28,7 +29,8 @@ export default function ShareInvite({ title, url, type = 'hangout', sender }: Sh
                     url: url
                 });
             } catch (error) {
-                console.error('Error sharing:', error);
+                console.warn('Share cancelled or failed:', error);
+                handleCopy(); // Fallback if share fails (e.g. desktop cancellation)
             }
         } else {
             handleCopy();

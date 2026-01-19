@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Calendar, Plus, User } from 'lucide-react';
+import { Home, Calendar, Plus, Users, User } from 'lucide-react';
 
 export default function Navigation() {
     const router = useRouter();
@@ -9,8 +9,9 @@ export default function Navigation() {
 
     const navItems = [
         { id: 'home', label: 'Home', icon: Home, path: '/' },
-        { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/calendar' },
+        { id: 'friends', label: 'Friends', icon: Users, path: '/friends' },
         { id: 'create', label: 'Create', icon: Plus, path: '/create', special: true },
+        { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/calendar' },
         { id: 'profile', label: 'Profile', icon: User, path: '/profile' },
     ];
 
@@ -19,7 +20,7 @@ export default function Navigation() {
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
             <div className="mx-auto max-w-[430px] p-6">
-                <div className="glass-nav px-2 py-3 rounded-full pointer-events-auto bg-black/60 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/50">
+                <div className="glass-nav px-2 py-3 rounded-elite pointer-events-auto bg-black/60 backdrop-blur-xl border border-white/10 shadow-xl shadow-black/50">
                     <div className="flex justify-between items-center px-4">
                         {navItems.map((item) => {
                             const Icon = item.icon;

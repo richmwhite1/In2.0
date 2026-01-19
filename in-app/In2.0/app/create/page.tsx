@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import CreateEventWizard from '@/components/wizard/CreateEventWizard';
 import Navigation from '@/components/Navigation';
 
@@ -16,7 +17,9 @@ export default function CreatePage() {
                 </header>
 
                 <div className="flex-1 flex items-center">
-                    <CreateEventWizard />
+                    <Suspense fallback={<div className="text-white/20 text-center w-full">Loading wizard...</div>}>
+                        <CreateEventWizard />
+                    </Suspense>
                 </div>
             </div>
 

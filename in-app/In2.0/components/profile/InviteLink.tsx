@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Share2 } from 'lucide-react';
 import { useState } from 'react';
 import GlassCard from '../GlassCard';
 
@@ -23,7 +23,11 @@ export default function InviteLink({ inviteUrl }: InviteLinkProps) {
 
     return (
         <GlassCard className="p-6 mb-6">
-            <h3 className="label mb-4 opacity-50">Share Your Passport</h3>
+            <div className="flex items-center gap-3 mb-4">
+                <Share2 size={18} className="text-purple-400" />
+                <h3 className="text-white font-bold">Invite Friends</h3>
+            </div>
+            <p className="text-white/40 text-sm mb-4">Share this link to invite friends to join you on In.</p>
             <div className="flex items-center gap-3">
                 <div className="flex-1 bg-white/5 border border-white/10 px-4 py-3 rounded-2xl text-sm font-medium text-white/60 truncate">
                     {inviteUrl}
@@ -37,7 +41,7 @@ export default function InviteLink({ inviteUrl }: InviteLinkProps) {
                 </button>
             </div>
             <p className="text-[10px] mt-4 text-white/30 text-center uppercase tracking-widest font-bold">
-                External RSVP flow enabled
+                {copied ? '✓ Link copied!' : 'Tap to copy invite link'}
             </p>
         </GlassCard>
     );

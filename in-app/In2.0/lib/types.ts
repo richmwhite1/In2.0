@@ -39,6 +39,16 @@ export interface Event {
     size?: 'small' | 'medium' | 'large'; // For bento grid layout
     aiGenerated?: boolean; // Flag for AI-generated events
     options?: EventOption[];
+    comments?: Comment[];
+}
+
+export interface Comment {
+    id: string;
+    message: string;
+    author: string;
+    avatar?: string;
+    createdAt: Date;
+    userId?: string;
 }
 
 // Attendance status
@@ -47,6 +57,14 @@ export interface Attendance {
     eventId: string;
     status: 'in' | 'out' | 'maybe' | 'interested';
     timestamp: Date;
+}
+
+export interface Guest {
+    id: string;
+    name: string;
+    avatar?: string | null;
+    status: string;
+    eventId: string;
 }
 
 // Mood data from AI agent

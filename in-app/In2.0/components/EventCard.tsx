@@ -38,7 +38,7 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
 
     return (
         <div
-            className={`event-card ${heightClass} cursor-pointer group animate-fade-in-up`}
+            className={`event-card rounded-elite ${heightClass} cursor-pointer group animate-fade-in-up`}
             style={{ animationDelay: `${index * 100}ms` }}
             onClick={() => router.push(`/mood/${event.id}`)}
         >

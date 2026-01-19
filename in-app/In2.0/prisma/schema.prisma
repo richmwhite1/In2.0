@@ -30,8 +30,13 @@ model Event {
   date        DateTime
   location    String
   image       String?
-  type        String    @default("EVENT") // "EVENT", "HANGOUT", "DIGITAL"
-  status      String    @default("PROPOSED") // "PROPOSED", "CONFIRMED", "CANCELLED"
+  type        String    @default("EVENT") // "EVENT", "HANGOUT", "DIGITAL", "POLL", "DATE"
+  status      String    @default("PROPOSED") // "PROPOSED", "CONFIRMED", "CANCELLED", "CONTINGENCY_VOTE"
+  deadline    DateTime?
+
+  // Social & Media
+  privacy     EventPrivacy @default(PRIVATE)
+  coverPhoto  String?      // Cloudinary URL or similar
   
   // Monetization fields
   affiliateUrl String?
@@ -46,6 +51,14 @@ model Event {
   comments    Comment[]
   options     EventOption[]
   clicks      AffiliateClick[]
+  checklist   Json?
+  metadata    Json?
+}
+
+enum EventPrivacy {
+  PRIVATE
+  FRIENDS
+  PUBLIC
 }
 
 model EventOption {
@@ -61,6 +74,8 @@ model EventOption {
   partnerId    String?
   partner      Partner?  @relation(fields: [partnerId], references: [id])
   isTopPick    Boolean   @default(false)
+  expertTip    String?
+  flavorTag    String?
   
   eventId     String
   event       Event     @relation(fields: [eventId], references: [id])
@@ -102,6 +117,12 @@ model Profile {
   avatar    String?
   bio       String?
   mood      String?  // Current mood status e.g. "Looking for Cocktails"
+  
+  // User Preferences for AI Personalization
+  preferredActivities String[]  @default([]) // ["hiking", "cocktails", "coffee", "dinner"]
+  availableTimes      String[]  @default([]) // ["weekday_evenings", "weekends", "mornings"]
+  dietaryRestrictions String[]  @default([]) // ["vegetarian", "gluten-free", "none"]
+  defaultLocation     String?   // Default zip code or neighborhood
   
   friends   Friendship[] @relation("UserFriends")
   friendOf  Friendship[] @relation("UserFriendOf")

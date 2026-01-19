@@ -28,13 +28,14 @@ export default function QuickCreateHangout({ isOpen, onClose, preSelectedActivit
 
         setIsGenerating(true);
         try {
-            // Create a Proposed Event with Options
-            const result = await createEventWithOptions({
+            // Create a Proposed Event with AI-generated Options
+            const result = await createEvent({
                 title: `${selectedActivity.label} Huddle`,
                 description: moodText || `${selectedActivity.label} with the group!`,
                 date: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-                activity: selectedActivity.label,
-                mood: moodText,
+                location: 'TBD',
+                type: 'HANGOUT',
+                withSuggestions: true, // Let AI generate options
             });
 
             if (result.success && result.event) {
@@ -46,7 +47,7 @@ export default function QuickCreateHangout({ isOpen, onClose, preSelectedActivit
                 });
 
                 onClose();
-                router.push(`/events/${result.event.id}`); // Navigate to voting page
+                router.push(`/mood/${result.event.id}`); // Navigate to hangout detail page
             }
         } catch (error) {
             console.error('Failed to broadcast mood:', error);

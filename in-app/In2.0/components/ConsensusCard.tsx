@@ -9,20 +9,30 @@ import { voteForOption } from '@/lib/actions';
 import { downloadICS } from '@/lib/CalendarIntegration';
 import { useToast, ToastContainer } from './Toast';
 import CountdownTimer from './CountdownTimer';
+import confetti from 'canvas-confetti';
 
 interface ConsensusCardProps {
     eventId: string;
     options: EventOption[];
     onVote?: (optionId: string) => void;
-    deadline?: Date; // Optional voting deadline
+    deadline?: Date;
+    totalGuests?: number;
 }
 
-export default function ConsensusCard({ eventId, options, onVote, deadline }: ConsensusCardProps) {
+export default function ConsensusCard({ eventId, options, onVote, deadline, totalGuests = 1 }: ConsensusCardProps) {
     const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
     const { toasts, addToast, removeToast } = useToast();
 
     const totalVotes = options.reduce((acc, opt) => acc + opt.voteCount, 0);
     const selectedOption = options.find(o => o.id === selectedOptionId);
+
+    // Consensus Logic
+    const maxVotes = Math.max(...options.map(o => o.voteCount));
+    const consensusThreshold = Math.ceil(totalGuests * 0.6);
+    const consensusProgress = Math.min((maxVotes / consensusThreshold) * 100, 100);
+    const isConfirmed = false; // We can't easily know if confirmed here unless passed in prop, but logic is handled backend.
+    // However, if we want to hide stuff when confirmed we need check event status.
+    // For now, let's just show the progress.
 
     const handleVote = async (optionId: string) => {
         // If already voted for this option, allow changing vote
@@ -38,8 +48,18 @@ export default function ConsensusCard({ eventId, options, onVote, deadline }: Co
         const guestInfo = { name: 'Guest User', userId: 'guest-' + Math.random().toString(36).substr(2, 9) };
 
         try {
-            await voteForOption(eventId, optionId, guestInfo);
-            addToast('Vote saved! Tap again to change', 'success');
+            const result = await voteForOption(eventId, optionId, guestInfo);
+            // @ts-ignore
+            if (result.consensusReached) {
+                confetti({
+                    particleCount: 200,
+                    spread: 100,
+                    colors: ['#00FF00', '#FFD700']
+                });
+                addToast('🎉 CONSENSUS REACHED! Event Confirmed.', 'success');
+            } else {
+                addToast('Vote saved! Tap again to change', 'success');
+            }
             onVote?.(optionId);
         } catch (error) {
             console.error('Failed to vote:', error);
@@ -65,6 +85,26 @@ export default function ConsensusCard({ eventId, options, onVote, deadline }: Co
     return (
         <>
             <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+            {/* Consensus Progress Indicator */}
+            <div className="mb-6">
+                <div className="flex justify-between text-xs font-bold text-white/60 mb-2 uppercase tracking-wider">
+                    <span>Consensus Progress</span>
+                    <span>{Math.round(consensusProgress)}%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden relative">
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${consensusProgress}%` }}
+                        className={`absolute left-0 top-0 bottom-0 rounded-full ${consensusProgress >= 100 ? 'bg-green-500' : 'bg-gradient-to-r from-purple-500 to-pink-500'}`}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                    />
+                    {/* Tick mark at 60%? No, 60% of guests IS 100% of progress */}
+                </div>
+                <p className="text-[10px] text-white/40 mt-1 text-right">
+                    {maxVotes}/{consensusThreshold} votes needed
+                </p>
+            </div>
 
             {/* Countdown Timer Header */}
             {deadline && (
@@ -105,7 +145,7 @@ export default function ConsensusCard({ eventId, options, onVote, deadline }: Co
                                 >
                                     <GlassCard
                                         onClick={() => !selectedOptionId && handleVote(option.id)}
-                                        className={`p-5 group relative overflow-hidden transition-all duration-500 rounded-[28px] ${isSelected ? 'border-accent-purple/50 bg-accent-purple/5' : 'hover:border-white/20'
+                                        className={`p-5 group relative overflow-hidden transition-all duration-500 rounded-elite ${isSelected ? 'border-accent-purple/50 bg-accent-purple/5' : 'hover:border-white/20'
                                             } ${selectedOptionId && !isSelected ? 'cursor-default pointer-events-none' : 'cursor-pointer'}`}
                                     >
                                         {/* Pulse Progress Bar - Hide when confirmed */}

@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, SchemaType, Schema } from "@google/generative-ai";
 import { prisma } from './db';
-import { Event } from './types';
+import { Event, EventOption } from './types';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!);
 
@@ -65,7 +65,7 @@ const verificationSchema = {
                 type: SchemaType.OBJECT,
                 properties: {
                     name: { type: SchemaType.STRING },
-                    reason: { type: SchemaType.STRING, description: "Why this is a vibe-match" },
+                    reason: { type: SchemaType.STRING, description: "Why this is a mood-match" },
                     location: { type: SchemaType.STRING }
                 }
             }
@@ -203,6 +203,166 @@ export async function generateEventRecommendation(prompt: string): Promise<Event
     await saveToCache(prompt, normalizedLocation, guestCount, event);
 
     return event;
+}
+
+/**
+ * Generate personalized event recommendation using user's profile preferences
+ * This enhances the AI prompt with user context for better suggestions
+ * 
+ * @param userId - User ID to fetch preferences from
+ * @param prompt - Natural language prompt for the event
+ * @returns Personalized event recommendation
+ */
+export async function generatePersonalizedRecommendation(
+    userId: string,
+    prompt: string
+): Promise<Event> {
+    console.log('🎯 Personalized agent for user:', userId);
+
+    // Fetch user preferences
+    let userContext = '';
+    try {
+        const profile = await prisma.profile.findUnique({
+            where: { userId }
+        });
+
+        if (profile) {
+            const prefs: string[] = [];
+
+            if (profile.preferredActivities && profile.preferredActivities.length > 0) {
+                prefs.push(`Favorite activities: ${profile.preferredActivities.join(', ')}`);
+            }
+            if (profile.availableTimes && profile.availableTimes.length > 0) {
+                prefs.push(`Usually free: ${profile.availableTimes.join(', ')}`);
+            }
+            if (profile.dietaryRestrictions && profile.dietaryRestrictions.length > 0 &&
+                !profile.dietaryRestrictions.includes('none')) {
+                prefs.push(`Dietary: ${profile.dietaryRestrictions.join(', ')}`);
+            }
+            if (profile.defaultLocation) {
+                prefs.push(`Usually hangs out near: ${profile.defaultLocation}`);
+            }
+            if (profile.mood) {
+                prefs.push(`Current mood: ${profile.mood}`);
+            }
+
+            if (prefs.length > 0) {
+                userContext = `\n\nUSER PREFERENCES (use to personalize):\n${prefs.join('\n')}`;
+                console.log('✨ User context loaded:', userContext);
+            }
+        }
+    } catch (error) {
+        console.error('Could not load user preferences:', error);
+    }
+
+    // Fetch user's past events for pattern learning
+    let pastEventContext = '';
+    try {
+        const pastEvents = await prisma.event.findMany({
+            where: {
+                guests: { some: { userId, status: 'IN' } },
+                date: { lt: new Date() }
+            },
+            orderBy: { date: 'desc' },
+            take: 5,
+            select: { title: true, location: true, type: true }
+        });
+
+        if (pastEvents.length > 0) {
+            const eventList = pastEvents.map(e => `${e.title} at ${e.location}`).join('; ');
+            pastEventContext = `\n\nPAST HANGOUTS (for pattern learning): ${eventList}`;
+            console.log('📊 Past events context loaded');
+        }
+    } catch (error) {
+        console.error('Could not load past events:', error);
+    }
+
+    // Enhanced prompt with personalization
+    const enhancedPrompt = `${prompt}${userContext}${pastEventContext}`;
+
+    // Use the standard generation with enhanced prompt
+    const location = extractLocationFromPrompt(prompt);
+    const guestCount = extractGuestCountFromPrompt(prompt);
+    const normalizedLocation = normalizeLocation(location);
+
+    const event = await callGeminiFlashPersonalized(enhancedPrompt, normalizedLocation, guestCount);
+
+    // Save to cache with user-specific key
+    await saveToCache(`user:${userId}:${prompt}`, normalizedLocation, guestCount, event);
+
+    return event;
+}
+
+/**
+ * Call Gemini Flash with personalized context
+ */
+async function callGeminiFlashPersonalized(
+    prompt: string,
+    location: string,
+    guestCount: number
+): Promise<Event> {
+    try {
+        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+
+        const now = new Date();
+        const systemPrompt = `You are an expert social coordinator with deep knowledge of each user's preferences. Generate a PERSONALIZED event recommendation.
+
+Current Date: ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+
+CRITICAL INSTRUCTIONS:
+- Use the USER PREFERENCES section to tailor your recommendation
+- If they prefer certain activities, suggest venues/events that match
+- Consider their available times when suggesting dates
+- Respect dietary restrictions when recommending restaurants
+- Use their default location if no location is specified
+- Learn from their past hangouts to suggest similar vibes
+
+Return ONLY valid JSON matching this exact structure:
+{
+  "id": "unique-id",
+  "title": "Event name",
+  "description": "Personalized description mentioning why this matches their preferences",
+  "image": "https://images.unsplash.com/photo-relevant-image",
+  "date": "ISO 8601 date string",
+  "location": "Venue name, Address",
+  "organizer": {
+    "id": "ai-assistant",
+    "name": "In. Assistant",
+    "avatar": "https://api.dicebear.com/7.x/bottts/svg?seed=assistant"
+  },
+  "guests": [],
+  "guestCount": ${guestCount},
+  "isPublic": false,
+  "tags": ["personalized", "tag1", "tag2"],
+  "status": "upcoming",
+  "size": "medium",
+  "aiGenerated": true
+}
+
+User request: ${prompt}`;
+
+        const result = await model.generateContent(systemPrompt);
+        const response = result.response;
+        const text = response.text();
+
+        let cleanedText = text.trim();
+        if (cleanedText.startsWith('```json')) {
+            cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+        } else if (cleanedText.startsWith('```')) {
+            cleanedText = cleanedText.replace(/```\n?/g, '');
+        }
+
+        const eventData = JSON.parse(cleanedText);
+
+        return {
+            ...eventData,
+            date: new Date(eventData.date),
+            endDate: eventData.endDate ? new Date(eventData.endDate) : undefined,
+        };
+    } catch (error) {
+        console.error('Error calling Gemini Flash (personalized):', error);
+        return createFallbackEvent(prompt, location, guestCount);
+    }
 }
 
 /**
@@ -368,7 +528,7 @@ export async function verifyVenueAndSuggestAlternatives(
         
         If it exists, provide its details.
         
-        Regardless of status, suggest 3 alternatives that match these vibes: ${moodTags.join(', ')}.
+        Regardless of status, suggest 3 alternatives that match these moods: ${moodTags.join(', ')}.
         If the primary venue is permanently closed or very crowded/popular, finding alternatives is critical.
         
         Return structured JSON.`;
@@ -523,7 +683,7 @@ export async function generateHangoutRecipe(activityName: string, userMood?: str
         const now = new Date();
         const systemPrompt = `You are a spontaneous social coordinator. Generate a "Hangout Recipe" for the activity: "${activityName}".
         
-        The user's specific mood/vibe: "${userMood || 'Just looking to do something fun'}".
+        The user's specific mood: "${userMood || 'Just looking to do something fun'}".
         Current Date: ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
 
         A "Hangout Recipe" is an informal but specific plan. 
@@ -611,7 +771,7 @@ export async function generateConsensusOptions(
 
         const optionsNeeded = partnerVenue ? 2 : 3;
         const systemPrompt = `You are an elite concierge social coordinator helping a group decide on a high-end plan for: "${activityName}".
-        Vibe: "${userMood || 'Spontaneous fun'}"
+        Mood: "${userMood || 'Spontaneous fun'}"
 
         Generate ${optionsNeeded} distinct candidate options (Venues/Setups). 
         - For physical activities, pick ${optionsNeeded} real local spots with different "flavors".

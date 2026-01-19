@@ -10,10 +10,14 @@ import GlassCard from './GlassCard';
 import EventChat from './EventChat';
 import { toggleAttendance, voteForOption } from '@/lib/actions';
 import ConsensusCard from './ConsensusCard';
-import { Calendar, Check, Star } from 'lucide-react';
+import { Calendar, Check, Star, Share2 } from 'lucide-react';
 import { downloadICS } from '@/lib/CalendarIntegration';
 import ShareInvite from './ShareInvite';
 import { useToast, ToastContainer } from './Toast';
+import BentoChecklist from './BentoChecklist';
+import PresenceFeed from './PresenceFeed';
+import CalendarPicker from './CalendarPicker';
+import InviteModal from './InviteModal';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -25,6 +29,8 @@ export default function MoodDetail({ event }: MoodDetailProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [rsvpStatus, setRsvpStatus] = useState<'in' | 'out' | null>(null);
+    const [showCalendarPicker, setShowCalendarPicker] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState(false);
     const { toasts, addToast, removeToast } = useToast();
 
     const isDating = searchParams.get('dating') === 'true';
@@ -77,7 +83,13 @@ export default function MoodDetail({ event }: MoodDetailProps) {
         await toggleAttendance(event.id, status, { name: 'Guest', userId: 'current-user-id' });
     };
 
-    const isProposed = event.status === 'PROPOSED';
+    const isProposed = event.status === 'PROPOSED' || event.status === 'CONTINGENCY_VOTE';
+    const isContingency = event.status === 'CONTINGENCY_VOTE';
+
+    // Check if event is imminent (within 2 hours)
+    const eventTime = new Date(event.date);
+    const timeDiff = eventTime.getTime() - new Date().getTime();
+    const isImminent = timeDiff > 0 && timeDiff < 2 * 60 * 60 * 1000;
 
     return (
         <>
@@ -104,6 +116,18 @@ export default function MoodDetail({ event }: MoodDetailProps) {
                 </div>
 
                 <div className="px-6 -mt-10 relative z-10 space-y-6">
+                    {/* Contingency Alert Banner */}
+                    {isContingency && (
+                        <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/50 flex items-start gap-4 mb-4 backdrop-blur-md">
+                            <div className="bg-red-500/20 p-2 rounded-full">
+                                <span className="text-xl">⚠️</span>
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-red-200">Contingency Alert</h3>
+                                <p className="text-red-200/80 text-sm">Original plan failed. Please vote on a Plan B below.</p>
+                            </div>
+                        </div>
+                    )}
                     <div className="space-y-2">
                         {isDating ? (
                             <div className="space-y-1">
@@ -114,20 +138,65 @@ export default function MoodDetail({ event }: MoodDetailProps) {
                                 </h2>
                             </div>
                         ) : (
-                            <div className="flex justify-between items-start">
-                                <h1 className="heading-lg text-white">{event.title}</h1>
-                                <button
-                                    onClick={() => downloadICS({
-                                        title: event.title,
-                                        description: event.description || '',
-                                        location: isProposed ? 'TBD' : event.location,
-                                        startTime: new Date(event.date),
-                                        durationMinutes: 120
-                                    })}
-                                    className="p-3 rounded-2xl bg-white text-black hover:scale-110 active:scale-95 transition-all shadow-xl shadow-white/5"
-                                >
-                                    <Calendar size={18} />
-                                </button>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <h1 className="heading-lg text-white">{event.title}</h1>
+                                            {event.privacy === 'FRIENDS' && (
+                                                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold uppercase tracking-wider border border-purple-500/30">
+                                                    Friends
+                                                </span>
+                                            )}
+                                            {event.privacy === 'PRIVATE' && (
+                                                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 text-[10px] font-bold uppercase tracking-wider border border-red-500/30">
+                                                    Private
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowCalendarPicker(true)}
+                                            className="p-3 rounded-2xl bg-white text-black hover:scale-110 active:scale-95 transition-all shadow-xl shadow-white/5"
+                                            title="Add to Calendar"
+                                        >
+                                            <Calendar size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setShowInviteModal(true)}
+                                            className="p-3 rounded-2xl bg-purple-500 text-white hover:scale-110 active:scale-95 transition-all shadow-xl shadow-purple-500/30"
+                                            title="Invite Friends"
+                                        >
+                                            <Share2 size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Imminent Mode: Checklist & Map */}
+                                {isImminent && (
+                                    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                        <BentoChecklist />
+
+                                        <GlassCard className="p-4 space-y-2 border-orange-500/50 shadow-[0_0_30px_-5px_rgba(249,115,22,0.3)]">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="font-bold text-white flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                                                    Head there now
+                                                </h3>
+                                                <span className="text-xs font-mono text-orange-400">LIVE MAP</span>
+                                            </div>
+                                            <div className="h-40 bg-white/10 rounded-xl flex items-center justify-center text-white/40 text-sm overflow-hidden relative">
+                                                {/* Placeholder Map Visual */}
+                                                <div className="absolute inset-0 opacity-50 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-gray-800 via-black to-black" />
+                                                <div className="z-10 bg-black/50 px-4 py-2 rounded-lg backdrop-blur-md border border-white/10">
+                                                    Tap for Directions
+                                                </div>
+                                            </div>
+                                            <p className="text-white/90 text-sm font-medium">{event.location}</p>
+                                        </GlassCard>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -176,7 +245,10 @@ export default function MoodDetail({ event }: MoodDetailProps) {
                                 eventId={event.id}
                                 options={event.options}
                                 deadline={event.deadline ? new Date(event.deadline) : undefined}
+                                totalGuests={event.guests?.length || 0}
                             />
+
+                            <PresenceFeed guests={event.guests || []} />
 
                             {/* Dating Mode: Accept/Decline Buttons */}
                             {isDating && (
@@ -188,7 +260,7 @@ export default function MoodDetail({ event }: MoodDetailProps) {
                                         }}
                                         className="flex-1 py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-2xl font-black text-lg shadow-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
                                     >
-                                        ✓ I'm In!
+                                        ✓ I&apos;m In!
                                     </button>
                                     <button
                                         onClick={() => {
@@ -211,7 +283,7 @@ export default function MoodDetail({ event }: MoodDetailProps) {
 
                             <GlassCard className="p-4 flex items-center justify-between">
                                 <div>
-                                    <div className="text-sm text-white/60 mb-1">Who's going?</div>
+                                    <div className="text-sm text-white/60 mb-1">Who&apos;s going?</div>
                                     <AvatarStack users={event.guests || []} max={4} size="md" />
                                 </div>
                                 <div className="text-xl font-bold text-white">
@@ -245,6 +317,26 @@ export default function MoodDetail({ event }: MoodDetailProps) {
                     )}
                 </div>
             </div>
+
+            {/* Calendar Picker Modal */}
+            <CalendarPicker
+                isOpen={showCalendarPicker}
+                onClose={() => setShowCalendarPicker(false)}
+                event={{
+                    title: event.title,
+                    description: event.description,
+                    date: new Date(event.date),
+                    location: event.location || 'TBD'
+                }}
+            />
+
+            {/* Invite Modal */}
+            <InviteModal
+                isOpen={showInviteModal}
+                onClose={() => setShowInviteModal(false)}
+                eventId={event.id}
+                eventTitle={event.title}
+            />
         </>
     );
 }

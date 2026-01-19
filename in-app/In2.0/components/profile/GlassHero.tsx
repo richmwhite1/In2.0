@@ -1,15 +1,17 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { Camera } from 'lucide-react';
 import GlassCard from '../GlassCard';
 
 interface GlassHeroProps {
     avatar: string;
     username: string;
     mood: string;
+    onAvatarEdit?: () => void;
 }
 
-export default function GlassHero({ avatar, username, mood }: GlassHeroProps) {
+export default function GlassHero({ avatar, username, mood, onAvatarEdit }: GlassHeroProps) {
     return (
         <GlassCard className="p-8 mb-6 overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl -mr-16 -mt-16 rounded-full" />
@@ -24,13 +26,16 @@ export default function GlassHero({ avatar, username, mood }: GlassHeroProps) {
                             className="w-full h-full rounded-full object-cover border-4 border-[#0A0A0A]"
                         />
                     </div>
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -bottom-2 -right-2 bg-white text-black px-4 py-1 rounded-full text-xs font-bold shadow-xl border border-white/20"
-                    >
-                        LIVE ⚡️
-                    </motion.div>
+
+                    {/* Photo Edit Button */}
+                    {onAvatarEdit && (
+                        <button
+                            onClick={onAvatarEdit}
+                            className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg hover:scale-110 transition-transform border-2 border-[#0A0A0A]"
+                        >
+                            <Camera size={18} />
+                        </button>
+                    )}
                 </div>
 
                 <h1 className="heading-lg mb-2 text-gradient">@{username}</h1>
@@ -51,5 +56,7 @@ function getMoodEmoji(mood: string) {
     if (m.includes('coffee')) return '☕️';
     if (m.includes('food') || m.includes('dinner')) return '🍽️';
     if (m.includes('party')) return '🎉';
+    if (m.includes('adventure')) return '🏔️';
+    if (m.includes('chill') || m.includes('relax')) return '😌';
     return '✨';
 }

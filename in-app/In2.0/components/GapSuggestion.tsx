@@ -87,7 +87,7 @@ export default function GapSuggestion({ suggestion, onDismiss }: GapSuggestionPr
                                 </div>
                             ))}
                         </div>
-                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Matching Vibes</span>
+                        <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Matching Moods</span>
                     </div>
 
                     <div className="flex gap-3 pt-2">

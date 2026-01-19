@@ -46,7 +46,7 @@ export default function StepMood({ value, onChange, onNext, onAIResult }: StepMo
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">What's the plan?</h2>
+                <h2 className="text-2xl font-bold mb-2">What&apos;s the plan?</h2>
                 <p className="text-white/60 text-sm">Pick an activity or describe what you want to do.</p>
             </div>
 
@@ -73,7 +73,7 @@ export default function StepMood({ value, onChange, onNext, onAIResult }: StepMo
                     placeholder="Or describe it: 'Sunset drinks at a rooftop bar...'"
                     className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder-white/40 focus:outline-none focus:border-accent-purple/50 transition-colors resize-none"
                 />
-                <p className="text-xs text-white/40 mt-2">Tip: Describe your idea and we'll suggest venues</p>
+                <p className="text-xs text-white/40 mt-2">Tip: Describe your idea and we&apos;ll suggest venues</p>
             </div>
 
             <button

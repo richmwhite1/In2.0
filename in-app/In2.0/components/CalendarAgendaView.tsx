@@ -35,7 +35,24 @@ export default function CalendarAgendaView({ events }: CalendarAgendaViewProps) 
                 const gaps = await findSocialGaps(events);
                 // Filter gaps for selected date
                 const dayGap = gaps.find(g => g.startTime.getDate() === selectedDate.getDate());
-                setSuggestion(dayGap || null);
+                if (dayGap) {
+                    setSuggestion({
+                        ...dayGap,
+                        friends: [
+                            { name: 'Sarah', avatar: '', mood: 'Cocktails' },
+                            { name: 'Mike', avatar: '', mood: 'Dinner' }
+                        ],
+                        suggestion: {
+                            title: 'Impromptu Hangout',
+                            venue: 'Local Spot',
+                            eventType: 'Drinks',
+                            description: 'Spontaneous catch-up',
+                            image: ''
+                        }
+                    });
+                } else {
+                    setSuggestion(null);
+                }
             } else {
                 setSuggestion(null);
             }

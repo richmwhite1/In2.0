@@ -1,189 +1,212 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import AvatarStack from './AvatarStack';
-import { Event } from '@/lib/types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Calendar, Users, ExternalLink, Plus } from 'lucide-react';
+import GlassCard from './GlassCard';
+import { getFriendsFeed } from '@/lib/actions';
+import { getUserEvents } from '@/lib/profile';
+
+type TabType = 'mine' | 'friends' | 'nearby';
+
+const DEMO_USER_ID = 'demo-user-123';
 
 interface EventFeedProps {
-    events: Event[];
+    onJoinEvent?: (eventId: string) => void;
 }
 
-export default function EventFeed({ events }: EventFeedProps) {
+export default function EventFeed({ onJoinEvent }: EventFeedProps) {
     const router = useRouter();
-    const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<TabType>('mine');
+    const [events, setEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Navigate to event detail
-    const handleEventClick = (eventId: string) => {
-        setSelectedEvent(eventId);
-        router.push(`/mood/${eventId}`);
-    };
+    useEffect(() => {
+        const loadEvents = async () => {
+            setLoading(true);
+            try {
+                if (activeTab === 'mine') {
+                    const result = await getUserEvents(DEMO_USER_ID);
+                    setEvents(result.events || []);
+                } else if (activeTab === 'friends' || activeTab === 'nearby') {
+                    const result = await getFriendsFeed();
+                    setEvents(result.events || []);
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                setEvents([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadEvents();
+    }, [activeTab]);
 
-    // Format date for display
-    const formatDate = (date: Date) => {
-        const eventDate = new Date(date);
+    const tabs = [
+        { id: 'mine' as TabType, label: 'My Plans' },
+        { id: 'friends' as TabType, label: 'Friends' },
+        { id: 'nearby' as TabType, label: 'Nearby' },
+    ];
+
+    const formatDate = (date: Date | string) => {
+        const d = new Date(date);
         const today = new Date();
-        const isToday = eventDate.toDateString() === today.toDateString();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-        if (isToday) {
-            return 'In-Progress';
+        if (d.toDateString() === today.toDateString()) {
+            return `Today, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+        } else if (d.toDateString() === tomorrow.toDateString()) {
+            return `Tomorrow, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+        } else {
+            return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
         }
-
-        return eventDate.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-        });
     };
 
-    // Get current date for header
-    const getCurrentDate = () => {
-        return new Date().toLocaleDateString('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-        });
+    const handleEventClick = (event: any) => {
+        router.push(`/mood/${event.id}`);
     };
 
     return (
-        <div className="min-h-screen bg-background pb-24">
-            {/* Header */}
-            <header className="sticky top-0 z-40 glass-nav px-6 py-4 mb-6">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h1 className="text-2xl font-black tracking-tight">Events</h1>
-                        <p className="text-xs text-white/60 mt-1">{getCurrentDate()}</p>
-                    </div>
-
-                    {/* Glassmorphic User Avatar */}
-                    <div className="glass w-12 h-12 flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
-                    </div>
-                </div>
-            </header>
-
-            {/* Event Cards - Vertical Stack */}
-            <div className="px-6 space-y-4">
-                {events.map((event, index) => (
-                    <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{
-                            duration: 0.4,
-                            delay: index * 0.1,
-                            type: 'spring',
-                            stiffness: 100
-                        }}
-                        whileTap={{
-                            scale: 0.98,
-                            transition: { type: 'spring', stiffness: 400, damping: 17 }
-                        }}
-                        onClick={() => handleEventClick(event.id)}
-                        className="relative rounded-extra overflow-hidden cursor-pointer"
-                        style={{ height: '400px' }}
+        <div className="px-6">
+            {/* Tab Bar */}
+            <div className="flex bg-white/5 rounded-xl p-1 mb-4">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === tab.id
+                                ? 'bg-white text-black'
+                                : 'text-white/40 hover:text-white'
+                            }`}
                     >
-                        {/* Full-Bleed Background Image */}
-                        <div className="absolute inset-0">
-                            <img
-                                src={event.image}
-                                alt={event.title}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-
-                        {/* Gradient Scrim for Text Legibility */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-
-                        {/* Top Right Badge - Glassmorphic */}
-                        <div className="absolute top-4 right-4">
-                            <div className="glass bg-white/90 backdrop-blur-xl px-4 py-2 rounded-full">
-                                <span className="text-black text-sm font-bold">
-                                    {formatDate(event.date)}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Bottom Content */}
-                        <div className="absolute bottom-0 left-0 right-0 p-6">
-                            {/* Overlapping Participant Avatars */}
-                            <div className="mb-3">
-                                <AvatarStack users={event.guests} max={4} size="md" />
-                            </div>
-
-                            {/* Event Title */}
-                            <h2 className="text-white text-2xl font-bold mb-2 leading-tight">
-                                {event.title}
-                            </h2>
-
-                            {/* Event Details */}
-                            <div className="flex items-center gap-4 text-white/80 text-sm">
-                                <span className="flex items-center gap-1">
-                                    <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                        />
-                                    </svg>
-                                    {event.guestCount} participants
-                                </span>
-
-                                <span className="flex items-center gap-1">
-                                    <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                                        />
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                    </svg>
-                                    {event.location}
-                                </span>
-                            </div>
-                        </div>
-                    </motion.div>
+                        {tab.label}
+                    </button>
                 ))}
             </div>
 
-            {/* Fixed Bottom Navigation - High Blur Glassmorphic */}
-            <nav className="fixed bottom-0 left-0 right-0 z-50">
-                <div className="glass-nav px-6 py-4 max-w-[430px] mx-auto backdrop-blur-3xl">
-                    <div className="flex justify-around items-center">
-                        {[
-                            { id: 'calendar', label: 'Calendar', icon: '📅' },
-                            { id: 'collections', label: 'Collections', icon: '📚' },
-                            { id: 'search', label: 'Search', icon: '🔍' },
-                            { id: 'menu', label: 'Menu', icon: '☰' },
-                        ].map((item) => (
-                            <button
-                                key={item.id}
-                                className="flex flex-col items-center gap-1 transition-all duration-300 hover:scale-110"
+            {/* Event List */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-3"
+                >
+                    {loading ? (
+                        <div className="py-12 text-center">
+                            <div className="animate-pulse text-white/40">Loading...</div>
+                        </div>
+                    ) : events.length === 0 ? (
+                        <GlassCard className="p-8 text-center">
+                            <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
+                                <Calendar size={24} className="text-white/20" />
+                            </div>
+                            <p className="text-white/60 font-medium mb-1">
+                                {activeTab === 'mine' && 'No hangouts yet'}
+                                {activeTab === 'friends' && "No friends' events"}
+                                {activeTab === 'nearby' && 'No nearby events'}
+                            </p>
+                            <p className="text-white/30 text-sm">
+                                {activeTab === 'mine' && 'Create your first hangout above'}
+                                {activeTab === 'friends' && 'Add friends to see their plans'}
+                                {activeTab === 'nearby' && 'Check back later for public events'}
+                            </p>
+                        </GlassCard>
+                    ) : (
+                        events.map((event, index) => (
+                            <motion.div
+                                key={event.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
                             >
-                                <span className="text-2xl">{item.icon}</span>
-                                <span className="text-xs text-white/60">{item.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </nav>
+                                <GlassCard
+                                    className="p-4 cursor-pointer hover:bg-white/5 transition-all group"
+                                    onClick={() => handleEventClick(event)}
+                                >
+                                    <div className="flex gap-4">
+                                        {/* Event Image */}
+                                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex-shrink-0 overflow-hidden">
+                                            {event.image || event.coverPhoto ? (
+                                                <img
+                                                    src={event.image || event.coverPhoto}
+                                                    alt={event.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-2xl">
+                                                    {getEventEmoji(event.type || event.title)}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Event Details */}
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-white font-bold truncate group-hover:text-purple-300 transition-colors">
+                                                {event.title}
+                                            </h4>
+                                            <p className="text-white/50 text-sm flex items-center gap-1 mt-1">
+                                                <Calendar size={12} />
+                                                {formatDate(event.date)}
+                                            </p>
+                                            {event.location && event.location !== 'TBD' && (
+                                                <p className="text-white/40 text-sm flex items-center gap-1">
+                                                    <MapPin size={12} />
+                                                    <span className="truncate">{event.location}</span>
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Guest Count / Status */}
+                                        <div className="flex-shrink-0 flex flex-col items-end justify-between">
+                                            {event.guests && event.guests.length > 0 && (
+                                                <div className="flex items-center gap-1 text-white/40 text-xs">
+                                                    <Users size={12} />
+                                                    {event.guests.length}
+                                                </div>
+                                            )}
+                                            {activeTab !== 'mine' && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (onJoinEvent) onJoinEvent(event.id);
+                                                    }}
+                                                    className="px-3 py-1 rounded-lg bg-white text-black text-xs font-bold hover:scale-105 transition-transform"
+                                                >
+                                                    Join
+                                                </button>
+                                            )}
+                                            {event.status === 'PROPOSED' && (
+                                                <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-300 text-[10px] font-bold uppercase">
+                                                    Voting
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </GlassCard>
+                            </motion.div>
+                        ))
+                    )}
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
+}
+
+function getEventEmoji(typeOrTitle: string): string {
+    const t = typeOrTitle?.toLowerCase() || '';
+    if (t.includes('dinner') || t.includes('food') || t.includes('taco')) return '🍽️';
+    if (t.includes('drink') || t.includes('cocktail') || t.includes('bar')) return '🍸';
+    if (t.includes('golf')) return '⛳';
+    if (t.includes('hike') || t.includes('hiking') || t.includes('nature')) return '🥾';
+    if (t.includes('coffee')) return '☕';
+    if (t.includes('movie') || t.includes('film')) return '🎬';
+    if (t.includes('concert') || t.includes('music')) return '🎵';
+    if (t.includes('comedy')) return '🎤';
+    if (t.includes('gym') || t.includes('workout') || t.includes('yoga')) return '🏋️';
+    if (t.includes('date')) return '💖';
+    return '✨';
 }
