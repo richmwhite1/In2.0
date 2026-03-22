@@ -1,0 +1,550 @@
+{{- 'section-main-product.css' | asset_url | stylesheet_tag -}}
+{{- 'component-price.css' | asset_url | stylesheet_tag -}}
+{{- 'component-slider.css' | asset_url | stylesheet_tag -}}
+{{- 'component-deferred-media.css' | asset_url | stylesheet_tag -}}
+
+<script src="{{ 'product-info.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
+{%- if request.design_mode -%}
+  <script src="{{ 'theme-editor.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}
+
+{%- assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src' -%}
+{%- assign product_form_id = 'product-form-golden-latte-' | append: section.id -%}
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 1 — PRODUCT HERO
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<product-info
+  id="MainProduct-{{ section.id }}"
+  class="sbp-hero-wrapper"
+  data-section="{{ section.id }}"
+  data-product-id="{{ product.id }}"
+  data-update-url="true"
+  data-url="{{ product.url }}"
+>
+  <div class="sbp-hero">
+
+    {%- comment -%} LEFT — Gallery {%- endcomment -%}
+    <div class="sbp-hero__gallery">
+      {%- if product.media.size > 0 -%}
+        <div class="sbp-gallery">
+          {%- for media in product.media -%}
+            <div class="sbp-gallery__slide {% if forloop.first %}sbp-gallery__slide--active{% endif %}">
+              {%- if media.media_type == 'image' -%}
+                {{
+                  media
+                  | image_url: width: 1200
+                  | image_tag:
+                    loading: forloop.first | default: 'lazy',
+                    fetchpriority: forloop.first | default: 'auto',
+                    widths: '600, 900, 1200',
+                    class: 'sbp-gallery__img',
+                    alt: media.alt
+                }}
+              {%- endif -%}
+            </div>
+          {%- endfor -%}
+        </div>
+        {%- if product.media.size > 1 -%}
+          <div class="sbp-gallery__thumbs">
+            {%- for media in product.media limit: 6 -%}
+              {%- if media.media_type == 'image' -%}
+                <button class="sbp-gallery__thumb {% if forloop.first %}sbp-gallery__thumb--active{% endif %}"
+                  data-index="{{ forloop.index0 }}"
+                  aria-label="{{ media.alt | default: product.title | escape }} image {{ forloop.index }}">
+                  {{
+                    media
+                    | image_url: width: 120
+                    | image_tag:
+                      loading: 'lazy',
+                      widths: '80, 120',
+                      class: 'sbp-gallery__thumb-img',
+                      alt: media.alt
+                  }}
+                </button>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      {%- else -%}
+        <div class="sbp-gallery sbp-gallery--placeholder">
+          <div class="sbp-gallery__slide sbp-gallery__slide--active">
+            {{ 'product-2' | placeholder_svg_tag: 'sbp-placeholder-svg' }}
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} RIGHT — Product Info {%- endcomment -%}
+    <div class="sbp-hero__info">
+
+      <div class="sbp-hero__flag sbp-hero__flag--pink">★ Best Seller</div>
+
+      <p class="sbp-hero__tagline">Your daily recovery ritual. Powered by medicinal mushrooms, concentrated botanicals, and ancient spice wisdom.</p>
+
+      <h1 class="sbp-hero__name">{{ product.title | default: 'Golden Latte' }}</h1>
+
+      <div class="sbp-hero__price" id="price-{{ section.id }}" role="status">
+        {%- render 'price', product: product, use_variant: true, show_badges: true, price_class: 'price--large' -%}
+        <p class="sbp-hero__per">/ 30-day supply · 30 servings</p>
+      </div>
+
+      {%- comment -%} Add to cart form {%- endcomment -%}
+      {%- form 'product', product,
+        id: product_form_id,
+        class: 'sbp-product-form',
+        novalidate: 'novalidate',
+        data-type: 'add-to-cart-form'
+      -%}
+        <input
+          type="hidden"
+          name="id"
+          value="{{ product.selected_or_first_available_variant.id }}"
+          class="product-variant-id"
+          form="{{ product_form_id }}"
+        >
+
+        <div class="sbp-product-form__error" role="alert" aria-live="polite" hidden>
+          <span class="sbp-product-form__error-message"></span>
+        </div>
+
+        <button
+          type="submit"
+          name="add"
+          class="sb-btn sb-btn--filled sbp-add-to-cart"
+          {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}
+        >
+          {%- if product.selected_or_first_available_variant.available -%}
+            Add to Cart — Begin Your Ritual
+          {%- else -%}
+            Sold Out
+          {%- endif -%}
+        </button>
+      {%- endform -%}
+
+      {%- comment -%} Benefit bullets {%- endcomment -%}
+      <ul class="sbp-hero__bullets">
+        <li>Supports your body's natural inflammatory response after daily wear and stress</li>
+        <li>Eight medicinal mushrooms provide broad-spectrum immune and adaptogenic support</li>
+        <li>Turmeric and ginger juice extracts — concentrated for maximum potency</li>
+        <li>Sprouted broccoli and alfalfa sprouts supply sulforaphane to support natural detox pathways</li>
+        <li>Black pepper extract enhances curcumin bioavailability up to 2000%</li>
+        <li>Warming, deeply comforting — perfect as a morning alternative or evening wind-down</li>
+      </ul>
+
+      <p class="sbp-hero__trust">★★★★★ · 500+ ritual converts · No artificial anything</p>
+
+    </div>
+  </div>
+
+  {%- render 'product-media-modal', variant_images: variant_images -%}
+
+  <script type="application/ld+json">
+    {{ product | structured_data }}
+  </script>
+</product-info>
+
+{%- comment -%}
+  Simple gallery JS — thumbnail click switches main image
+{%- endcomment -%}
+<script>
+  (function() {
+    var gallery = document.querySelector('.sbp-gallery');
+    var thumbs = document.querySelectorAll('.sbp-gallery__thumb');
+    if (!gallery || !thumbs.length) return;
+    thumbs.forEach(function(thumb) {
+      thumb.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.index, 10);
+        var slides = gallery.querySelectorAll('.sbp-gallery__slide');
+        slides.forEach(function(s) { s.classList.remove('sbp-gallery__slide--active'); });
+        thumbs.forEach(function(t) { t.classList.remove('sbp-gallery__thumb--active'); });
+        if (slides[idx]) slides[idx].classList.add('sbp-gallery__slide--active');
+        this.classList.add('sbp-gallery__thumb--active');
+      });
+    });
+  })();
+</script>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 2 — FORMULA STORY
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--deep sbp-formula" id="SbpFormula">
+  <div class="sbp-container sbp-formula__inner">
+    <div class="sbp-formula__label">
+      <span class="sb-eyebrow">The Formula</span>
+    </div>
+    <div class="sbp-formula__content">
+      <h2 class="sbp-section-headline">The most intentional turmeric latte ever formulated.</h2>
+      <div class="sbp-formula__body">
+        <p>Most turmeric lattes are turmeric, milk, and maybe a sprinkle of cinnamon. Ours contains an 8-mushroom blend, concentrated turmeric and ginger juice extracts — not powders, extracts — sulforaphane-rich sprouted greens, and black pepper to unlock curcumin's full potential in your body.</p>
+        <p>This is what recovery feels like when it is built into your daily ritual. The Golden Latte is the perfect companion to Wizard's Brew — and it can also stand completely alone as the most nourishing warm drink you have ever made.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 3 — EXTRACT DIFFERENCE
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--base sbp-spagyric" id="SbpSpagyric">
+  <div class="sbp-container sbp-spagyric__grid">
+
+    <div class="sbp-spagyric__content">
+      <span class="sb-eyebrow">The Extraction Advantage</span>
+      <h2 class="sbp-section-headline">Why juice extracts and not powders.</h2>
+      <p class="sbp-spagyric__body">Most turmeric products use dried powder. We use juice extracts — a concentrated form that preserves a broader range of the plant's active compounds than standard drying can. Turmeric's curcumin is notoriously poorly absorbed on its own. We pair it with black pepper extract containing piperine, which research shows can enhance curcumin absorption by up to 2000%.</p>
+      <p class="sbp-spagyric__body">We also include ginger juice extract — traditionally used for digestive comfort, circulation, and nausea support, and itself a potent supporter of the body's inflammatory pathways.</p>
+    </div>
+
+    <div class="sbp-spagyric__callout">
+      <div class="sbp-callout-box">
+        <div class="sbp-callout-box__icon">⚗</div>
+        <p class="sbp-callout-box__text">"The difference between a turmeric latte that tastes nice and one that actually does something is in the extraction method and the bioavailability stack. Golden Latte is built for the latter."</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 4 — INGREDIENT GROUPS ACCORDION
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--card sbp-ingredients" id="SbpIngredients">
+  <div class="sbp-container">
+
+    <div class="sbp-ingredients__header">
+      <span class="sb-eyebrow">What's Inside</span>
+      <h2 class="sbp-section-headline">Six ingredient groups. One governing idea.</h2>
+    </div>
+
+    <div class="sbp-accordion-grid">
+
+      <details class="sbp-accordion__item" open>
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">01</span>
+          <span class="sbp-accordion__label">Sprouted Greens</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Alfalfa Sprouts · Broccoli Sprouts</p>
+          <p class="sbp-accordion__copy">Broccoli sprouts are one of the most potent natural sources of sulforaphane — a compound well-researched for its role in activating Nrf2, the body's master antioxidant and detoxification pathway. Alfalfa sprouts contribute enzymes, chlorophyll, and additional phytonutrients. Sprouting increases the bioavailability of these compounds beyond what mature vegetables can provide.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">02</span>
+          <span class="sbp-accordion__label">The Extract Duo</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Turmeric Juice Extract · Ginger Juice Extract</p>
+          <p class="sbp-accordion__copy">These are not powders. Juice extracts preserve a broader range of the plant's active compounds than standard dried powder at a higher concentration. Turmeric's curcumin is one of the most extensively studied natural compounds for supporting a healthy inflammatory response. Ginger complements it — traditionally used for digestive comfort, circulation, and nausea support.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">03</span>
+          <span class="sbp-accordion__label">8-Mushroom Blend</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Chaga · Maitake · Reishi · Royal Agaricus · Shiitake · Turkey Tail · Cordyceps · Lion's Mane</p>
+          <p class="sbp-accordion__copy">Eight of the most revered medicinal mushrooms in traditional and modern functional medicine in a single serving. Turkey Tail and Chaga are among the most researched for immune-modulating beta-glucans. Maitake supports metabolic health. Shiitake contributes to cardiovascular wellness. Royal Agaricus is associated with immune support. Together this blend covers the entire spectrum of mushroom-supported wellness — immunity, cognition, energy, cellular health, and adaptability to stress.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">04</span>
+          <span class="sbp-accordion__label">Bioavailability Stack</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Black Pepper Extract (Piperine)</p>
+          <p class="sbp-accordion__copy">Piperine is proven to enhance curcumin absorption by up to 2000% — which is why it is non-negotiable in any serious turmeric formula. Without it most of the curcumin you consume passes through without being absorbed. With it the entire formula becomes dramatically more effective.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">05</span>
+          <span class="sbp-accordion__label">Warming Spices</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Carob · Cinnamon · Cardamom</p>
+          <p class="sbp-accordion__copy">Each chosen for function beyond flavor. Cinnamon supports healthy blood sugar metabolism. Cardamom supports digestion and adds a beautiful aromatic warmth. Carob provides a natural caffeine-free depth of flavor that makes Golden Latte genuinely luxurious to drink.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">06</span>
+          <span class="sbp-accordion__label">Why Caffeine-Free Matters</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__copy">Golden Latte contains no caffeine — making it suitable as an afternoon or evening ritual, or for people who prefer to avoid caffeine entirely. The energy you feel from Golden Latte comes from mushroom adaptogenic support and inflammatory balance, not stimulation. It is sustainable and calm.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 5 — SENSORY DESCRIPTION
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--deep sbp-sensory" id="SbpSensory">
+  <div class="sbp-container sbp-sensory__inner">
+    {%- if section.settings.sensory_image != blank -%}
+      <div class="sbp-sensory__image">
+        {{
+          section.settings.sensory_image
+          | image_url: width: 800
+          | image_tag:
+            loading: 'lazy',
+            widths: '400, 600, 800',
+            class: 'sbp-sensory__img',
+            alt: section.settings.sensory_image.alt
+        }}
+      </div>
+    {%- endif -%}
+    <div class="sbp-sensory__content {% unless section.settings.sensory_image != blank %}sbp-sensory__content--centered{% endunless %}">
+      <span class="sb-eyebrow">The Experience</span>
+      <h2 class="sbp-section-headline">What does it actually taste like?</h2>
+      <p class="sbp-sensory__quote">Rich, creamy, and warmly spiced — like a golden milk latte from a serious café but with a depth and complexity that comes from 8 mushrooms and real botanical extracts. It froths beautifully with any milk.</p>
+      <p class="sbp-sensory__body">Add oat milk and a spoonful of honey and it becomes genuinely luxurious. Customers routinely describe it as the best thing they have ever made in their own kitchen.</p>
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 6 — TRUST & SAFETY
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--base sbp-trust" id="SbpTrust">
+  <div class="sbp-container">
+
+    <div class="sbp-trust__header">
+      <span class="sb-eyebrow">Purity &amp; Safety</span>
+      <h2 class="sbp-section-headline">Why you can trust what is in your cup.</h2>
+    </div>
+
+    <div class="sbp-trust__grid">
+
+      <div class="sbp-trust-col">
+        <div class="sbp-trust-col__icon">✕</div>
+        <h3 class="sbp-trust-col__heading">Free From</h3>
+        <ul class="sbp-trust-col__list">
+          <li>Artificial sweeteners</li>
+          <li>Artificial flavors</li>
+          <li>Seed oils</li>
+          <li>Gums, binders, or fillers</li>
+          <li>Caffeine</li>
+        </ul>
+      </div>
+
+      <div class="sbp-trust-col sbp-trust-col--gold">
+        <div class="sbp-trust-col__icon">✓</div>
+        <h3 class="sbp-trust-col__heading">Good For</h3>
+        <ul class="sbp-trust-col__list">
+          <li>Adults wanting daily inflammatory support</li>
+          <li>People sensitive to caffeine</li>
+          <li>Evening wind-down ritual</li>
+          <li>Anyone wanting immune breadth and recovery support</li>
+        </ul>
+      </div>
+
+      <div class="sbp-trust-col">
+        <div class="sbp-trust-col__icon">!</div>
+        <h3 class="sbp-trust-col__heading">Check With Your Doctor</h3>
+        <ul class="sbp-trust-col__list">
+          <li>Pregnant or breastfeeding</li>
+          <li>Taking blood thinners or medications</li>
+          <li>Managing a specific health condition</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <p class="sbp-trust__disclaimer">This product is not intended to diagnose, treat, cure, or prevent any disease.</p>
+
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 7 — FAQ
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--card sbp-faq" id="SbpFaq">
+  <div class="sbp-container sbp-faq__inner">
+
+    <div class="sbp-faq__header">
+      <span class="sb-eyebrow">Questions</span>
+      <h2 class="sbp-section-headline">Frequently asked.</h2>
+    </div>
+
+    <div class="sbp-faq__grid">
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">When should I drink it?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Many customers drink it as a morning ritual alongside or instead of Wizard's Brew. Others use it as an afternoon or evening wind-down — it is caffeine-free and naturally calming. There is no wrong time. Listen to your body.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Is the curcumin actually absorbed?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Yes — we made sure of it. Curcumin is notoriously poorly absorbed on its own. We include black pepper extract which research shows can enhance curcumin absorption by up to 2000%. We also use turmeric juice extract rather than powder which preserves a wider range of active compounds.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Is it caffeinated?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>No. Golden Latte is naturally caffeine-free making it suitable as an afternoon or evening drink or for people who prefer to avoid caffeine entirely.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Can I take both Golden Latte and Wizard's Brew?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>This is actually how Spellbinder is designed to be used — as a two-elixir system. Wizard's Brew handles energy, cognition, hormonal adaptability, and longevity. Golden Latte adds deep inflammatory support, immune breadth, and recovery. Together they are significantly more powerful than either one alone.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">How do I prepare it?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Add one scoop to 8–12 oz of hot water or warm milk. Stir or froth. Add honey if desired. It froths exceptionally well — a milk frother takes it to café level in 30 seconds.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Is it vegan and dairy-free?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Yes. Golden Latte is vegan and dairy-free. Add whatever milk you prefer — oat, almond, coconut, or whole milk all work beautifully.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 8 — RELATED PRODUCT TEASER
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--deep sbp-related" id="SbpRelated">
+  <div class="sbp-container sbp-related__inner">
+
+    <div class="sbp-related__content">
+      <span class="sb-eyebrow">Complete the System</span>
+      <h2 class="sbp-section-headline">Complete the system.</h2>
+      <p class="sbp-related__body">Golden Latte handles recovery, immunity, and inflammatory balance. Wizard's Brew adds energy, cognition, hormonal adaptability, and longevity support. Together they are the complete Biological Intelligence morning system.</p>
+      <a href="{{ section.settings.wizards_brew_link }}" class="sb-btn sb-btn--filled">
+        Discover Wizard's Brew →
+      </a>
+    </div>
+
+    <div class="sbp-related__image">
+      {%- if section.settings.wizards_brew_image != blank -%}
+        {{
+          section.settings.wizards_brew_image
+          | image_url: width: 800
+          | image_tag:
+            loading: 'lazy',
+            widths: '400, 600, 800',
+            class: 'sbp-related__img',
+            alt: section.settings.wizards_brew_image.alt
+        }}
+      {%- else -%}
+        <div class="sbp-related__placeholder">
+          {{ 'product-1' | placeholder_svg_tag: 'sbp-placeholder-svg' }}
+        </div>
+      {%- endif -%}
+    </div>
+
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Golden Latte Product",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Sensory Section"
+    },
+    {
+      "type": "image_picker",
+      "id": "sensory_image",
+      "label": "Sensory section image (optional)"
+    },
+    {
+      "type": "header",
+      "content": "Related Product"
+    },
+    {
+      "type": "image_picker",
+      "id": "wizards_brew_image",
+      "label": "Wizard's Brew product image"
+    },
+    {
+      "type": "url",
+      "id": "wizards_brew_link",
+      "label": "Wizard's Brew product link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Golden Latte Product"
+    }
+  ]
+}
+{% endschema %}

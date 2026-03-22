@@ -1,0 +1,577 @@
+{{- 'section-main-product.css' | asset_url | stylesheet_tag -}}
+{{- 'component-price.css' | asset_url | stylesheet_tag -}}
+{{- 'component-slider.css' | asset_url | stylesheet_tag -}}
+{{- 'component-deferred-media.css' | asset_url | stylesheet_tag -}}
+
+<script src="{{ 'product-info.js' | asset_url }}" defer="defer"></script>
+<script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
+{%- if request.design_mode -%}
+  <script src="{{ 'theme-editor.js' | asset_url }}" defer="defer"></script>
+{%- endif -%}
+
+{%- assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src' -%}
+{%- assign product_form_id = 'product-form-wizards-brew-' | append: section.id -%}
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 1 — PRODUCT HERO
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<product-info
+  id="MainProduct-{{ section.id }}"
+  class="sbp-hero-wrapper"
+  data-section="{{ section.id }}"
+  data-product-id="{{ product.id }}"
+  data-update-url="true"
+  data-url="{{ product.url }}"
+>
+  <div class="sbp-hero">
+
+    {%- comment -%} LEFT — Gallery {%- endcomment -%}
+    <div class="sbp-hero__gallery">
+      {%- if product.media.size > 0 -%}
+        <div class="sbp-gallery">
+          {%- for media in product.media -%}
+            <div class="sbp-gallery__slide {% if forloop.first %}sbp-gallery__slide--active{% endif %}">
+              {%- if media.media_type == 'image' -%}
+                {{
+                  media
+                  | image_url: width: 1200
+                  | image_tag:
+                    loading: forloop.first | default: 'lazy',
+                    fetchpriority: forloop.first | default: 'auto',
+                    widths: '600, 900, 1200',
+                    class: 'sbp-gallery__img',
+                    alt: media.alt
+                }}
+              {%- endif -%}
+            </div>
+          {%- endfor -%}
+        </div>
+        {%- if product.media.size > 1 -%}
+          <div class="sbp-gallery__thumbs">
+            {%- for media in product.media limit: 6 -%}
+              {%- if media.media_type == 'image' -%}
+                <button class="sbp-gallery__thumb {% if forloop.first %}sbp-gallery__thumb--active{% endif %}"
+                  data-index="{{ forloop.index0 }}"
+                  aria-label="{{ media.alt | default: product.title | escape }} image {{ forloop.index }}">
+                  {{
+                    media
+                    | image_url: width: 120
+                    | image_tag:
+                      loading: 'lazy',
+                      widths: '80, 120',
+                      class: 'sbp-gallery__thumb-img',
+                      alt: media.alt
+                  }}
+                </button>
+              {%- endif -%}
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+      {%- else -%}
+        <div class="sbp-gallery sbp-gallery--placeholder">
+          <div class="sbp-gallery__slide sbp-gallery__slide--active">
+            {{ 'product-1' | placeholder_svg_tag: 'sbp-placeholder-svg' }}
+          </div>
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} RIGHT — Product Info {%- endcomment -%}
+    <div class="sbp-hero__info">
+
+      <div class="sbp-hero__flag">★ Hero Product</div>
+
+      <p class="sbp-hero__tagline">Energy · Hormones · Longevity · Cognition</p>
+
+      <h1 class="sbp-hero__name">{{ product.title | default: "Wizard's Brew" }}</h1>
+
+      <div class="sbp-hero__price" id="price-{{ section.id }}" role="status">
+        {%- render 'price', product: product, use_variant: true, show_badges: true, price_class: 'price--large' -%}
+        <p class="sbp-hero__per">/ 30-day supply · 30 servings</p>
+      </div>
+
+      {%- comment -%} Add to cart form {%- endcomment -%}
+      {%- form 'product', product,
+        id: product_form_id,
+        class: 'sbp-product-form',
+        novalidate: 'novalidate',
+        data-type: 'add-to-cart-form'
+      -%}
+        <input
+          type="hidden"
+          name="id"
+          value="{{ product.selected_or_first_available_variant.id }}"
+          class="product-variant-id"
+          form="{{ product_form_id }}"
+        >
+
+        <div class="sbp-product-form__error" role="alert" aria-live="polite" hidden>
+          <span class="sbp-product-form__error-message"></span>
+        </div>
+
+        <button
+          type="submit"
+          name="add"
+          class="sb-btn sb-btn--filled sbp-add-to-cart"
+          {% if product.selected_or_first_available_variant.available == false %}disabled{% endif %}
+        >
+          {%- if product.selected_or_first_available_variant.available -%}
+            Add to Cart — Begin Your Ritual
+          {%- else -%}
+            Sold Out
+          {%- endif -%}
+        </button>
+      {%- endform -%}
+
+      {%- comment -%} Benefit bullets {%- endcomment -%}
+      <ul class="sbp-hero__bullets">
+        <li>Supports sustained, jitter-free energy throughout the day</li>
+        <li>Formulated to support healthy hormonal balance and stress resilience</li>
+        <li>Promotes gut health, digestive comfort, and a thriving microbiome</li>
+        <li>Supports cognitive clarity, focus, and brain health</li>
+        <li>Contributes to healthy inflammation response and long-term cellular vitality</li>
+        <li>Zero artificial sweeteners, zero seed oils, zero fillers — ever</li>
+      </ul>
+
+      <p class="sbp-hero__trust">★★★★★ · 500+ ritual converts · No artificial anything</p>
+
+    </div>
+  </div>
+
+  {%- render 'product-media-modal', variant_images: variant_images -%}
+
+  <script type="application/ld+json">
+    {{ product | structured_data }}
+  </script>
+</product-info>
+
+{%- comment -%}
+  Simple gallery JS — thumbnail click switches main image
+{%- endcomment -%}
+<script>
+  (function() {
+    var gallery = document.querySelector('.sbp-gallery');
+    var thumbs = document.querySelectorAll('.sbp-gallery__thumb');
+    if (!gallery || !thumbs.length) return;
+    thumbs.forEach(function(thumb) {
+      thumb.addEventListener('click', function() {
+        var idx = parseInt(this.dataset.index, 10);
+        var slides = gallery.querySelectorAll('.sbp-gallery__slide');
+        slides.forEach(function(s) { s.classList.remove('sbp-gallery__slide--active'); });
+        thumbs.forEach(function(t) { t.classList.remove('sbp-gallery__thumb--active'); });
+        if (slides[idx]) slides[idx].classList.add('sbp-gallery__slide--active');
+        this.classList.add('sbp-gallery__thumb--active');
+      });
+    });
+  })();
+</script>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 2 — FORMULA STORY
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--deep sbp-formula" id="SbpFormula">
+  <div class="sbp-container sbp-formula__inner">
+    <div class="sbp-formula__label">
+      <span class="sb-eyebrow">The Formula</span>
+    </div>
+    <div class="sbp-formula__content">
+      <h2 class="sbp-section-headline">This formula took years to create. Here is why every ingredient is in it.</h2>
+      <div class="sbp-formula__body">
+        <p>Most functional teas are a marketing exercise. Pick a few trendy mushrooms. Add them to green tea. Slap a wellness claim on the label. Charge $30. Wizard's Brew was built differently.</p>
+        <p>Our formulator — a microbiologist who spent years studying the gut microbiome, cellular biology, and the ancient botanical traditions of China, India, and beyond — asked a different question: What would a tea look like if every ingredient was chosen for a specific biological purpose, synergistically, with zero compromises on purity?</p>
+        <p>The answer took years of formulation. It resulted in a blend of over 30 ingredients spanning seven tea traditions, medicinal fungi, algae, Traditional Chinese Medicine botanicals, fermented spagyric extracts, adaptogens, and warming spices — each one earning its place in the cup.</p>
+        <p>The result is not just a drink. It is a daily act of Biological Intelligence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 3 — SPAGYRIC DIFFERENCE
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--base sbp-spagyric" id="SbpSpagyric">
+  <div class="sbp-container sbp-spagyric__grid">
+
+    <div class="sbp-spagyric__content">
+      <span class="sb-eyebrow">The Alchemy Advantage</span>
+      <h2 class="sbp-section-headline">Why we use spagyric extraction — and why it matters for your body.</h2>
+      <p class="sbp-spagyric__body">Standard herbal extraction methods isolate specific compounds from a plant. They are efficient, but they leave something behind. Spagyric extraction is a traditional alchemical process that captures the full spectrum of a plant's active constituents — essential oils, alkaloids, mineral salts, and more — in a way that standard extraction cannot.</p>
+      <p class="sbp-spagyric__body">The fermentation component also generates beneficial postbiotic compounds that support gut health directly. The practical result: your body recognizes and uses more of what each plant has to offer. The science calls this bioavailability. We call it the Alchemy Advantage.</p>
+    </div>
+
+    <div class="sbp-spagyric__callout">
+      <div class="sbp-callout-box">
+        <div class="sbp-callout-box__icon">⚗</div>
+        <p class="sbp-callout-box__text">"No other morning beverage on the market uses spagyric-extracted botanicals. It is one of the clearest reasons Wizard's Brew performs differently — and why our customers report noticing a difference more quickly than they expected."</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 4 — INGREDIENT GROUPS ACCORDION
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--card sbp-ingredients" id="SbpIngredients">
+  <div class="sbp-container">
+
+    <div class="sbp-ingredients__header">
+      <span class="sb-eyebrow">What's Inside</span>
+      <h2 class="sbp-section-headline">Over 30 ingredients. Eight groups. One governing idea.</h2>
+    </div>
+
+    <div class="sbp-accordion-grid">
+
+      <details class="sbp-accordion__item" open>
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">01</span>
+          <span class="sbp-accordion__label">The Tea Matrix</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Yerba Mate · Darjeeling · Jiaogulan · Rooibos · Liu Bao · Long Jing · Oolong · Puerh</p>
+          <p class="sbp-accordion__copy">Eight distinct teas from across the globe, each carrying its own unique profile of polyphenols, antioxidants, and natural compounds. Together they provide a gentle sustained release of natural energy without the cortisol-spiking effect of high-dose caffeine. Jiaogulan — known as Southern Ginseng — has been used in Chinese longevity traditions for centuries. Puerh is fermented and particularly valued for gut and metabolic support. Rooibos is naturally caffeine-free and rich in antioxidants.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">02</span>
+          <span class="sbp-accordion__label">Algae &amp; Fungi Superfoods</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Marine Phytoplankton · Spirulina · Chlorella · Cordyceps · Lion's Mane · Reishi</p>
+          <p class="sbp-accordion__copy">Marine phytoplankton is foundational cellular nutrition — a dense bioavailable source of micronutrients, amino acids, and essential fatty acids. Spirulina and chlorella deliver protein, vitamins, minerals, and support natural detoxification pathways. Cordyceps supports cellular energy and oxygen utilization. Lion's Mane is associated with supporting nerve growth factor and cognitive function. Reishi — the mushroom of immortality in Chinese medicine — is a powerful adaptogen that supports immune balance, stress resilience, and deep restoration.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">03</span>
+          <span class="sbp-accordion__label">Spagyric Fermented Extracts</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Proprietary fermented spagyric botanical extracts</p>
+          <p class="sbp-accordion__copy">This is the process that separates Wizard's Brew from everything else. Spagyric extraction uses ancient alchemical principles — fermentation, distillation, and purification — to produce whole-plant extracts of exceptional potency and bioavailability. The fermentation step also creates beneficial postbiotics, supporting the gut microbiome directly.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">04</span>
+          <span class="sbp-accordion__label">Adaptogens</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Ashwagandha · Astragalus · Siberian Ginseng · Ginseng</p>
+          <p class="sbp-accordion__copy">Adaptogens help the body adapt to stress rather than react to it. Ashwagandha is traditionally used to support the body's response to stress and promote calm without sedation. Research suggests it may help support healthy cortisol levels. Astragalus is associated with immune resilience and longevity support. Ginseng and Siberian Ginseng are traditionally used to support energy, stamina, and cognitive performance.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">05</span>
+          <span class="sbp-accordion__label">TCM Longevity Botanicals</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Eucommia Bark · Epimedium · He Shou Wu</p>
+          <p class="sbp-accordion__copy">Drawn from Traditional Chinese Medicine, these three herbs have been used for centuries in longevity and vitality formulations. Eucommia bark is traditionally used to support kidney and liver yang — associated in TCM with foundational vitality and hormonal health. Epimedium is classically associated with supporting hormonal vitality and circulation. He Shou Wu is one of the most revered TCM longevity tonics traditionally associated with healthy aging. <em>Note: He Shou Wu should be consumed as part of a balanced formula — consult your practitioner if you have liver conditions.</em></p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">06</span>
+          <span class="sbp-accordion__label">Cognitive Support</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Ginkgo Biloba</p>
+          <p class="sbp-accordion__copy">One of the world's oldest living tree species. Ginkgo is among the most studied botanicals for cognitive support — researched for its role in promoting healthy circulation to the brain and supporting memory, focus, and cognitive clarity.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">07</span>
+          <span class="sbp-accordion__label">Inflammation &amp; Liver Support</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Turmeric · Silymarin (Milk Thistle)</p>
+          <p class="sbp-accordion__copy">Turmeric's active compound curcumin is one of the most well-researched natural substances for supporting a healthy inflammatory response. Silymarin extracted from milk thistle is classically used for liver support and is one of the most studied hepatoprotective botanicals in the world.</p>
+        </div>
+      </details>
+
+      <details class="sbp-accordion__item">
+        <summary class="sbp-accordion__trigger">
+          <span class="sbp-accordion__num">08</span>
+          <span class="sbp-accordion__label">Warming Spices</span>
+          <span class="sbp-accordion__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-accordion__body">
+          <p class="sbp-accordion__ingredients">Cardamom · Cacao · Cinnamon</p>
+          <p class="sbp-accordion__copy">Beyond delicious flavor these spices earn their place: cinnamon supports healthy blood sugar metabolism; cacao is rich in flavanols that support heart health and mood; cardamom supports digestion and adds a warming aromatic complexity that makes every sip feel intentional.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 5 — SENSORY DESCRIPTION
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--deep sbp-sensory" id="SbpSensory">
+  <div class="sbp-container sbp-sensory__inner">
+    {%- if section.settings.sensory_image != blank -%}
+      <div class="sbp-sensory__image">
+        {{
+          section.settings.sensory_image
+          | image_url: width: 800
+          | image_tag:
+            loading: 'lazy',
+            widths: '400, 600, 800',
+            class: 'sbp-sensory__img',
+            alt: section.settings.sensory_image.alt
+        }}
+      </div>
+    {%- endif -%}
+    <div class="sbp-sensory__content {% unless section.settings.sensory_image != blank %}sbp-sensory__content--centered{% endunless %}">
+      <span class="sb-eyebrow">The Experience</span>
+      <h2 class="sbp-section-headline">What does it actually taste like?</h2>
+      <p class="sbp-sensory__quote">Imagine the warmth of a gently spiced chai meeting the earthy depth of a fine oolong — but lighter, cleaner, and naturally smooth. There is no bitterness. No chalkiness. No artificial aftertaste.</p>
+      <p class="sbp-sensory__body">Notes of cacao and cardamom weave through a base of ancient teas. Add a splash of your favorite milk and a frother and it becomes something genuinely special — the kind of morning drink you look forward to before your eyes are fully open.</p>
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 6 — TRUST & SAFETY
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--base sbp-trust" id="SbpTrust">
+  <div class="sbp-container">
+
+    <div class="sbp-trust__header">
+      <span class="sb-eyebrow">Purity &amp; Safety</span>
+      <h2 class="sbp-section-headline">Why you can trust what is in your cup.</h2>
+    </div>
+
+    <div class="sbp-trust__grid">
+
+      <div class="sbp-trust-col">
+        <div class="sbp-trust-col__icon">✕</div>
+        <h3 class="sbp-trust-col__heading">Free From</h3>
+        <ul class="sbp-trust-col__list">
+          <li>Artificial sweeteners</li>
+          <li>Artificial flavors or colors</li>
+          <li>Seed oils</li>
+          <li>Gums, binders, or fillers</li>
+          <li>Vague proprietary blends</li>
+        </ul>
+      </div>
+
+      <div class="sbp-trust-col sbp-trust-col--gold">
+        <div class="sbp-trust-col__icon">✓</div>
+        <h3 class="sbp-trust-col__heading">Good For</h3>
+        <ul class="sbp-trust-col__list">
+          <li>Adults wanting long-term cellular health</li>
+          <li>People sensitive to coffee</li>
+          <li>Wellness-focused women navigating hormonal health</li>
+          <li>Biohackers and longevity enthusiasts</li>
+        </ul>
+      </div>
+
+      <div class="sbp-trust-col">
+        <div class="sbp-trust-col__icon">!</div>
+        <h3 class="sbp-trust-col__heading">Check With Your Doctor</h3>
+        <ul class="sbp-trust-col__list">
+          <li>Pregnant or breastfeeding</li>
+          <li>Taking medications</li>
+          <li>Managing a specific health condition</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <p class="sbp-trust__disclaimer">*These statements have not been evaluated by the Food and Drug Administration. This product is not intended to diagnose, treat, cure, or prevent any disease.</p>
+
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 7 — FAQ
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--card sbp-faq" id="SbpFaq">
+  <div class="sbp-container sbp-faq__inner">
+
+    <div class="sbp-faq__header">
+      <span class="sb-eyebrow">Questions</span>
+      <h2 class="sbp-section-headline">Frequently asked.</h2>
+    </div>
+
+    <div class="sbp-faq__grid">
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">How long before I notice a difference?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Most customers notice something within the first week — often better energy levels, improved digestive comfort, or a calmer more focused morning. The deeper benefits — hormonal rhythm, cognitive clarity, cellular support — compound over weeks and months of consistent daily use.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Can I drink this instead of coffee?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Absolutely. Many customers have replaced coffee entirely and say they don't miss the jitters or the crash. You will get a gentler more sustained energy from the tea matrix without the cortisol spike that coffee can produce.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Is it sweet? Can I add milk?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>The tea has a natural mild earthiness with warming spice notes. Most customers add oat milk, almond milk, or whole milk and use a frother to create a latte-style experience. A small amount of honey or maple syrup works well if you prefer sweeter.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Is it safe every day?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Yes. Every ingredient is formulated for safe long-term daily use at the amounts included.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Will it upset my stomach?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Wizard's Brew is formulated with gut health in mind. Most customers with sensitive stomachs find it well-tolerated — many specifically report improved digestive comfort. If you have a highly sensitive gut start with a half serving for the first few days.</p>
+        </div>
+      </details>
+
+      <details class="sbp-faq__item">
+        <summary class="sbp-faq__trigger">
+          <span class="sbp-faq__question">Can men drink this too?</span>
+          <span class="sbp-faq__caret"><svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        </summary>
+        <div class="sbp-faq__answer">
+          <p>Yes — wholeheartedly. While the formulation is particularly supportive of women's hormonal health and longevity every ingredient supports the biology of all adults.</p>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+{%- comment -%}
+  ══════════════════════════════════════════════
+  SECTION 8 — RELATED PRODUCT TEASER
+  ══════════════════════════════════════════════
+{%- endcomment -%}
+
+<section class="sbp-section sbp-section--deep sbp-related" id="SbpRelated">
+  <div class="sbp-container sbp-related__inner">
+
+    <div class="sbp-related__content">
+      <span class="sb-eyebrow">Complete the System</span>
+      <h2 class="sbp-section-headline">Complete the system.</h2>
+      <p class="sbp-related__body">Wizard's Brew handles energy, cognition, hormonal adaptability, and longevity. The Golden Latte adds deep inflammatory support, immune breadth, and recovery. Together they are significantly more powerful than either one alone.</p>
+      <a href="{{ section.settings.golden_latte_link }}" class="sb-btn sb-btn--filled">
+        Discover the Golden Latte →
+      </a>
+    </div>
+
+    <div class="sbp-related__image">
+      {%- if section.settings.golden_latte_image != blank -%}
+        {{
+          section.settings.golden_latte_image
+          | image_url: width: 800
+          | image_tag:
+            loading: 'lazy',
+            widths: '400, 600, 800',
+            class: 'sbp-related__img',
+            alt: section.settings.golden_latte_image.alt
+        }}
+      {%- else -%}
+        <div class="sbp-related__placeholder">
+          {{ 'product-2' | placeholder_svg_tag: 'sbp-placeholder-svg' }}
+        </div>
+      {%- endif -%}
+    </div>
+
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Wizard's Brew Product",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Sensory Section"
+    },
+    {
+      "type": "image_picker",
+      "id": "sensory_image",
+      "label": "Sensory section image (optional)"
+    },
+    {
+      "type": "header",
+      "content": "Related Product"
+    },
+    {
+      "type": "image_picker",
+      "id": "golden_latte_image",
+      "label": "Golden Latte product image"
+    },
+    {
+      "type": "url",
+      "id": "golden_latte_link",
+      "label": "Golden Latte product link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Wizard's Brew Product"
+    }
+  ]
+}
+{% endschema %}

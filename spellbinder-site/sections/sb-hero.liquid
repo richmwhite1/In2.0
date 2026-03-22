@@ -1,0 +1,113 @@
+<section class="sb-hero" id="SbHero">
+  <div class="sb-hero__grid">
+
+    {%- comment -%} LEFT — Copy {%- endcomment -%}
+    <div class="sb-hero__copy">
+      <p class="sb-eyebrow">{{ section.settings.eyebrow }}</p>
+      <h1 class="sb-hero__headline">{{ section.settings.headline }}</h1>
+      <p class="sb-hero__subhead">{{ section.settings.subhead }}</p>
+      <p class="sb-hero__body">{{ section.settings.body }}</p>
+      <div class="sb-hero__actions">
+        <a href="{{ section.settings.cta_link | default: '/collections/all' }}" class="sb-btn sb-btn--filled">
+          {{- section.settings.cta_label -}}
+        </a>
+        <a href="{{ section.settings.ghost_link }}" class="sb-link-ghost">
+          {{- section.settings.ghost_label -}}
+        </a>
+      </div>
+      <p class="sb-hero__trust">{{ section.settings.trust_line }}</p>
+    </div>
+
+    {%- comment -%} RIGHT — Image {%- endcomment -%}
+    <div class="sb-hero__image">
+      {%- if section.settings.hero_image != blank -%}
+        {{
+          section.settings.hero_image
+          | image_url: width: 1400
+          | image_tag:
+            loading: 'eager',
+            fetchpriority: 'high',
+            widths: '600, 800, 1000, 1200, 1400',
+            class: 'sb-hero__img',
+            alt: section.settings.hero_image.alt
+        }}
+      {%- else -%}
+        <div class="sb-hero__placeholder" style="background: linear-gradient(135deg, #0A1410 0%, #1A0E00 100%); min-height: 600px; display: flex; align-items: center; justify-content: center;">
+          {{ 'product-1' | placeholder_svg_tag: 'sb-placeholder-svg' }}
+        </div>
+      {%- endif -%}
+    </div>
+
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "SB — Hero",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow",
+      "default": "Est. Original 2024"
+    },
+    {
+      "type": "text",
+      "id": "headline",
+      "label": "Headline",
+      "default": "Your morning ritual. Reimagined."
+    },
+    {
+      "type": "text",
+      "id": "subhead",
+      "label": "Subheadline",
+      "default": "Spagyric Alchemy · Microbiologist Formulated · Biological Intelligence"
+    },
+    {
+      "type": "textarea",
+      "id": "body",
+      "label": "Body copy",
+      "default": "The world's only spagyric-extracted morning elixir system — crafted where ancient Eastern herbalism collides with Western biochemistry. Over 30 synergistic ingredients. Zero compromises. One extraordinary daily ritual."
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "CTA button label",
+      "default": "Begin Your Ritual →"
+    },
+    {
+      "type": "url",
+      "id": "cta_link",
+      "label": "CTA button link"
+    },
+    {
+      "type": "text",
+      "id": "ghost_label",
+      "label": "Ghost link label",
+      "default": "Discover the difference"
+    },
+    {
+      "type": "url",
+      "id": "ghost_link",
+      "label": "Ghost link URL"
+    },
+    {
+      "type": "text",
+      "id": "trust_line",
+      "label": "Trust line",
+      "default": "★★★★★ · 500+ ritual converts · No artificial anything"
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Hero image (right side)"
+    }
+  ],
+  "presets": [
+    {
+      "name": "SB — Hero"
+    }
+  ]
+}
+{% endschema %}
