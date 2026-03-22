@@ -1,0 +1,129 @@
+<section class="sb-section sb-section--card sb-ingredient-edu" id="SbIngredientEdu">
+  <div class="sb-container sb-ingredient-edu__grid">
+
+    {%- comment -%} LEFT — Image {%- endcomment -%}
+    <div class="sb-ingredient-edu__image">
+      {%- if section.settings.edu_image != blank -%}
+        {{
+          section.settings.edu_image
+          | image_url: width: 900
+          | image_tag:
+            loading: 'lazy',
+            widths: '400, 600, 900',
+            class: 'sb-ingredient-edu__img',
+            alt: section.settings.edu_image.alt
+        }}
+      {%- else -%}
+        <div class="sb-ingredient-edu__placeholder" style="background: linear-gradient(135deg, #070D0A 0%, #0F1E19 100%); min-height: 500px; display: flex; align-items: center; justify-content: center;">
+          {{ 'product-2' | placeholder_svg_tag: 'sb-placeholder-svg' }}
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- comment -%} RIGHT — Accordion {%- endcomment -%}
+    <div class="sb-ingredient-edu__content">
+      <span class="sb-eyebrow">What's Inside</span>
+      <h2 class="sb-section-headline" style="margin-bottom: 40px;">Formulated by system.<br>Synergistic by design.</h2>
+
+      <div class="sb-accordion">
+
+        <details class="sb-accordion__item" open>
+          <summary class="sb-accordion__trigger">
+            <span class="sb-accordion__icon">⚡</span>
+            <span class="sb-accordion__label">Energy &amp; Vitality</span>
+            <span class="sb-accordion__caret">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </span>
+          </summary>
+          <div class="sb-accordion__body">
+            <p class="sb-accordion__ingredients">Cordyceps · Yerba Mate · Ginseng · Puerh · Oolong · Darjeeling · Jiaogulan</p>
+            <p class="sb-accordion__copy">Support your body's natural energy production pathways — not by forcing a stimulant response, but by supporting mitochondrial function and cellular oxygen utilization. Smooth, sustained energy without the cortisol spike.</p>
+          </div>
+        </details>
+
+        <details class="sb-accordion__item">
+          <summary class="sb-accordion__trigger">
+            <span class="sb-accordion__icon">⚗</span>
+            <span class="sb-accordion__label">Hormonal Balance &amp; Stress</span>
+            <span class="sb-accordion__caret">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </span>
+          </summary>
+          <div class="sb-accordion__body">
+            <p class="sb-accordion__ingredients">Ashwagandha · Reishi · Astragalus · Epimedium · Eucommia Bark · He Shou Wu</p>
+            <p class="sb-accordion__copy">These adaptogens support the HPA axis — your body's central stress-response system — and the natural pathways for hormonal balance. None are hormones. They help create the conditions where your own hormonal intelligence can operate optimally.</p>
+          </div>
+        </details>
+
+        <details class="sb-accordion__item">
+          <summary class="sb-accordion__trigger">
+            <span class="sb-accordion__icon">🌿</span>
+            <span class="sb-accordion__label">Gut Health &amp; Microbiome</span>
+            <span class="sb-accordion__caret">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </span>
+          </summary>
+          <div class="sb-accordion__body">
+            <p class="sb-accordion__ingredients">Spirulina · Chlorella · Spagyric Fermented Extracts · Ginger · Cardamom · Cinnamon</p>
+            <p class="sb-accordion__copy">The gut microbiome is foundational to whole-body health. The fermented spagyric extracts produce beneficial postbiotics. Ginger, cardamom, and cinnamon have centuries of traditional use for digestive comfort and gut lining support.</p>
+          </div>
+        </details>
+
+        <details class="sb-accordion__item">
+          <summary class="sb-accordion__trigger">
+            <span class="sb-accordion__icon">🧠</span>
+            <span class="sb-accordion__label">Cognitive Function &amp; Brain</span>
+            <span class="sb-accordion__caret">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </span>
+          </summary>
+          <div class="sb-accordion__body">
+            <p class="sb-accordion__ingredients">Lion's Mane · Ginkgo Biloba · Ginseng · Cacao</p>
+            <p class="sb-accordion__copy">Lion's Mane is the most studied functional mushroom for cognitive support — associated with promoting Nerve Growth Factor (NGF). Ginkgo supports healthy circulation to the brain and memory. Cacao's flavanols support blood flow foundational to brain function.</p>
+          </div>
+        </details>
+
+        <details class="sb-accordion__item">
+          <summary class="sb-accordion__trigger">
+            <span class="sb-accordion__icon">🛡</span>
+            <span class="sb-accordion__label">Immune &amp; Cellular Health</span>
+            <span class="sb-accordion__caret">
+              <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1L6 6L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </span>
+          </summary>
+          <div class="sb-accordion__body">
+            <p class="sb-accordion__ingredients">Turkey Tail · Reishi · Chaga · Maitake · Shiitake · Royal Agaricus · Turmeric · Silymarin</p>
+            <p class="sb-accordion__copy">Nine medicinal mushrooms across both products. Beta-glucans are among the most studied natural immune modulators. Turmeric's curcumin supports a healthy inflammatory response. Silymarin protects the liver. Together: a comprehensive cellular defense system.</p>
+          </div>
+        </details>
+
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "SB — Ingredient Education",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "edu_image",
+      "label": "Left image"
+    },
+    {
+      "type": "url",
+      "id": "deepdive_link",
+      "label": "Deep dive link URL"
+    }
+  ],
+  "presets": [
+    {
+      "name": "SB — Ingredient Education"
+    }
+  ]
+}
+{% endschema %}

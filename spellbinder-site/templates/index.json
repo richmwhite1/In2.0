@@ -1,0 +1,80 @@
+{
+  "sections": {
+    "sb-hero": {
+      "type": "sb-hero",
+      "settings": {
+        "eyebrow": "Est. Original 2024",
+        "headline": "Your morning ritual. Reimagined.",
+        "subhead": "Spagyric Alchemy · Microbiologist Formulated · Biological Intelligence",
+        "body": "The world's only spagyric-extracted morning elixir system — crafted where ancient Eastern herbalism collides with Western biochemistry. Over 30 synergistic ingredients. Zero compromises. One extraordinary daily ritual.",
+        "cta_label": "Begin Your Ritual →",
+        "cta_link": "",
+        "ghost_label": "Discover the difference",
+        "ghost_link": "",
+        "trust_line": "★★★★★ · 500+ ritual converts · No artificial anything"
+      }
+    },
+    "sb-problem-solution": {
+      "type": "sb-problem-solution",
+      "settings": {}
+    },
+    "sb-three-rs": {
+      "type": "sb-three-rs",
+      "settings": {}
+    },
+    "sb-ingredient-education": {
+      "type": "sb-ingredient-education",
+      "settings": {
+        "deepdive_link": ""
+      }
+    },
+    "sb-difference-cards": {
+      "type": "sb-difference-cards",
+      "settings": {}
+    },
+    "sb-comparison-table": {
+      "type": "sb-comparison-table",
+      "settings": {}
+    },
+    "sb-products": {
+      "type": "sb-products",
+      "settings": {
+        "product1_link": "",
+        "product2_link": "",
+        "bundle_link": ""
+      }
+    },
+    "sb-lifestyle-strip": {
+      "type": "sb-lifestyle-strip",
+      "settings": {}
+    },
+    "sb-testimonials": {
+      "type": "sb-testimonials",
+      "settings": {}
+    },
+    "sb-how-it-works": {
+      "type": "sb-how-it-works",
+      "settings": {}
+    },
+    "sb-closing-cta": {
+      "type": "sb-closing-cta",
+      "settings": {
+        "product1_link": "",
+        "product2_link": ""
+      }
+    }
+  },
+  "order": [
+    "sb-hero",
+    "sb-products",
+    "sb-testimonials",
+    "sb-problem-solution",
+    "sb-three-rs",
+    "sb-how-it-works",
+    "sb-ingredient-education",
+    "sb-difference-cards",
+    "sb-comparison-table",
+    "sb-lifestyle-strip",
+    "sb-closing-cta"
+  ]
+}

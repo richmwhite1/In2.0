@@ -2292,6 +2292,21 @@ html body .sbp-hero__bullets li { font-size: 14px !important; }
 }
 
 /* ============================================================
+   COLLAPSIBLE SECTIONS — desktop always expanded
+   ============================================================ */
+@media (min-width: 750px) {
+  details.sb-mobile-collapse {
+    display: block;
+  }
+  details.sb-mobile-collapse > summary.sb-mobile-collapse__toggle {
+    display: none;
+  }
+  details.sb-mobile-collapse > *:not(summary) {
+    display: block !important;
+  }
+}
+
+/* ============================================================
    MOBILE UX OVERHAUL — max-width 749px
    ============================================================ */
 @media (max-width: 749px) {
@@ -2353,5 +2368,53 @@ html body .sbp-hero__bullets li { font-size: 14px !important; }
   .sb-bundle-strip__headline {
     font-size: 1.5rem !important;
     margin-bottom: 16px !important;
+  }
+
+  /* — Collapsible sections on mobile — */
+  summary.sb-mobile-collapse__toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 16px;
+    cursor: pointer;
+    font-family: var(--sb-font-head, 'Cormorant Garamond', serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--sb-cream, #F5EDD8);
+    letter-spacing: 0.02em;
+    list-style: none;
+    border-bottom: 1px solid rgba(245, 237, 216, 0.15);
+  }
+  summary.sb-mobile-collapse__toggle::-webkit-details-marker { display: none; }
+  summary.sb-mobile-collapse__toggle::marker { display: none; }
+  .sb-mobile-collapse__icon::before { content: '+'; font-size: 22px; font-weight: 300; }
+  details[open] > summary.sb-mobile-collapse__toggle .sb-mobile-collapse__icon::before { content: '−'; }
+  details.sb-mobile-collapse:not([open]) > *:not(summary) { display: none; }
+  details.sb-mobile-collapse[open] > .sb-container { padding-top: 24px !important; padding-bottom: 8px !important; }
+
+  /* — Fix product card text overflow — */
+  .sb-product-card {
+    overflow: hidden !important;
+  }
+  .sb-product-card__content {
+    padding: 20px 16px 28px !important;
+    overflow: hidden !important;
+  }
+  .sb-product-card__tagline {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    letter-spacing: 0.12em !important;
+    font-size: 0.6rem !important;
+  }
+  .sb-product-card__name {
+    font-size: clamp(1.6rem, 7vw, 2.2rem) !important;
+  }
+  .sb-product-card__desc {
+    font-size: 15px !important;
+    line-height: 1.7 !important;
+  }
+  .sb-product-card__bullets li {
+    font-size: 14px !important;
   }
 }
